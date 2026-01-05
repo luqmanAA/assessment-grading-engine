@@ -81,7 +81,8 @@ class LLMGrader(BaseGrader):
 
     def evaluate_result(self, expected: str, actual: str, template: str = None) -> float:
         prompt = self.prepare_prompt(expected, actual, template)
-        return self.backend.generate_score(prompt)
+        score = self.backend.generate_score(prompt)
+        return score
 
 
 class GradingFactory:
@@ -122,7 +123,9 @@ class GradingService:
             if score is not None:
                 answer.score = score
                 answer.save()
-                total_score += score
+
+            if answer.score is not None:
+                total_score += answer.score
 
         question_count = submission.exam.questions.count()
         submission.total_score = total_score

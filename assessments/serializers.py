@@ -85,6 +85,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
     answers = StudentAnswerSerializer(many=True)
     exam_title = serializers.ReadOnlyField(source='exam.title')
     student = serializers.ReadOnlyField(source='student.username')
+    submitted_at = serializers.ReadOnlyField(source='created_at')
 
     class Meta:
         model = Submission
@@ -94,11 +95,16 @@ class SubmissionSerializer(serializers.ModelSerializer):
             'exam_title',
             'student',
             'grade',
+            'is_completed',
+            'submitted_at',
+            'updated_at',
             'completed_at',
             'answers'
         )
         read_only_fields = (
             'grade',
+            'is_completed',
+            'updated_at',
             'completed_at',
             'student'
         )
@@ -107,10 +113,21 @@ class SubmissionSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         exam = attrs.get('exam')
         user_submission = Submission.objects.filter(student=user, exam=exam).first()
-        if user_submission.is_completed  or user_submission.answers.count() == exam.questions.count():
-            raise serializers.ValidationError({
-                "non_field_errors": "You have already completed this exam and cannot submit again."
-            })
+        
+        # if user_submission and (user_submission.is_completed or user_submission.answers.count() == exam.questions.count()):
+        #     raise serializers.ValidationError({
+        #         "non_field_errors": "You have already completed this exam and cannot submit again."
+        #     })
+
+        # Strict Validation: Ensure all questions belong to the submitted exam
+        answers_data = attrs.get('answers', [])
+        for answer in answers_data:
+            question = answer.get('question')
+            if question and question.exam_id != exam.id:
+                raise serializers.ValidationError({
+                    "answers": f"Question {question.id} does not belong to the specified exam."
+                })
+
         return attrs
 
     def create(self, validated_data):
