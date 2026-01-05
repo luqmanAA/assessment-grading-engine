@@ -52,24 +52,26 @@ class LLMGrader(BaseGrader):
             self.model = None
             logger.warning("GOOGLE_API_KEY not found. LLMGrader will fail or return default scores.")
 
-    def grade(self, expected: str, actual: str) -> float:
+    def prepare_prompt(self, expected: str, actual: str, template: str) -> str:
+        default_template = "Expected: {expected}\nStudent: {actual}\nResult: 0.0-1.0 only."
+        active_template = template or default_template
+
+        # checking if the template contains the required placeholders and add if otherwise
+        if "{expected}" not in active_template or "{actual}" not in active_template:
+            active_template += "\n\nContext for grading:\nExpected: {expected}\nStudent Answer: {actual}"
+
+        return active_template.format(expected=expected, actual=actual)
+
+    def grade(self, expected: str, actual: str, template: str = None) -> float:
         if not self.model:
             logger.error("LLMGrader is not configured with an API key.")
             return 0.0
 
-        prompt = (
-            f"You are an automated grading assistant. \n"
-            f"Expected Answer: {expected}\n"
-            f"Student Answer: {actual}\n"
-            f"Grade the student's answer based on the expected answer. "
-            f"Return ONLY a numeric score between 0.0 and 1.0. "
-            f"0.0 means completely wrong, 1.0 means perfect match."
-        )
-
+        prompt = self.prepare_prompt(expected, actual, template)
         try:
             response = self.model.generate_content(prompt)
             score_text = response.text.strip()
-            # simple parsing, assuming the LLM obeys instructions
+            print(score_text)
             return float(score_text)
         except Exception as e:
             logger.error(f"Error in LLMGrader: {e}")
@@ -79,7 +81,9 @@ class LLMGrader(BaseGrader):
 class GradingFactory:
     @staticmethod
     def get_grader() -> BaseGrader:
-        engine = getattr(settings, 'GRADING_ENGINE', 'MOCK')
+        print(getattr(settings, 'GRADING_ENGINE'))
+        print(settings.GRADING_ENGINE)
+        engine = getattr(settings, 'GRADING_ENGINE')
 
         if engine == 'LLM':
             return LLMGrader()
@@ -92,6 +96,7 @@ class GradingService:
     @staticmethod
     def grade_submission(submission: Submission):
         grader = GradingFactory.get_grader()
+        print('grader', grader)
         total_score = 0.0
 
         for answer in submission.answers.all():

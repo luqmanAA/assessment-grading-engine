@@ -14,6 +14,11 @@ class Exam(BaseModel):
     duration = models.DurationField(help_text="Duration of the exam")
     course = models.CharField(max_length=255)
     metadata = models.JSONField(default=dict, blank=True)
+    grading_prompt = models.TextField(
+        default="Grade the student's answer based on the expected answer. \n"
+                "Return ONLY a numeric score between 0.0 and 1.0. \n"
+                "Expected Answer: {expected}\nStudent Answer: {actual}\nScore 0.0-1.0:"
+    )
 
     def __str__(self):
         return self.title
