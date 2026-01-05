@@ -82,7 +82,7 @@ class StudentAnswerSerializer(serializers.ModelSerializer):
 
 
 class SubmissionSerializer(serializers.ModelSerializer):
-    answers = StudentAnswerSerializer(many=True)
+    answers = StudentAnswerSerializer(many=True, required=False)
     exam_title = serializers.ReadOnlyField(source='exam.title')
     student = serializers.ReadOnlyField(source='student.username')
     submitted_at = serializers.ReadOnlyField(source='created_at')
@@ -96,6 +96,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
             'student',
             'grade',
             'is_completed',
+            'started_at',
             'submitted_at',
             'updated_at',
             'completed_at',
@@ -104,6 +105,7 @@ class SubmissionSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'grade',
             'is_completed',
+            'started_at',
             'updated_at',
             'completed_at',
             'student'
@@ -114,10 +116,18 @@ class SubmissionSerializer(serializers.ModelSerializer):
         exam = attrs.get('exam')
         user_submission = Submission.objects.filter(student=user, exam=exam).first()
         
-        if user_submission and (user_submission.is_completed or user_submission.answers.count() == exam.questions.count()):
-            raise serializers.ValidationError({
-                "non_field_errors": "You have already completed this exam and cannot submit again."
-            })
+        if user_submission:
+            # if user_submission.is_completed:
+            #     raise serializers.ValidationError({
+            #         "non_field_errors": "You have already completed this exam and cannot submit again."
+            #     })
+
+            # Duration Validation
+            from django.utils import timezone
+            if user_submission.started_at + exam.duration < timezone.now():
+                raise serializers.ValidationError({
+                    "non_field_errors": "The time for this exam has expired."
+                })
 
         # Strict Validation: Ensure all questions belong to the submitted exam
         answers_data = attrs.get('answers', [])
@@ -131,18 +141,20 @@ class SubmissionSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        answers_data = validated_data.pop('answers')
+        answers_data = validated_data.pop('answers', [])
 
         submission, _ = Submission.objects.get_or_create(**validated_data)
 
-        for answer_data in answers_data:
-            question = answer_data.pop('question', None)
-            StudentAnswer.objects.update_or_create(
-                submission=submission,
-                question=question,
-                defaults=answer_data
-            )
+        if answers_data:
+            for answer_data in answers_data:
+                question = answer_data.pop('question', None)
+                StudentAnswer.objects.update_or_create(
+                    submission=submission,
+                    question=question,
+                    defaults=answer_data
+                )
 
-        # Trigger grading asynchronously
-        grade_submission_task.delay(submission.id)
+            # Trigger grading asynchronously
+            grade_submission_task.delay(submission.id)
+        
         return submission

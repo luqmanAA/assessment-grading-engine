@@ -57,7 +57,7 @@ uv sync
 
 ### 4. Run Migrations
 ```bash
-uv run manage.py migrate
+uv run manage.py migrate && uv run manage.py migrate
 ```
 
 ### 5. Create Superuser

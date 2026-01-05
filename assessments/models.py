@@ -74,6 +74,7 @@ class Submission(BaseModel):
     )
     total_score = models.FloatField(null=True, validators=[MinValueValidator(0.0)])
     is_completed = models.BooleanField(default=False)
+    started_at = models.DateTimeField()
     completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -81,6 +82,7 @@ class Submission(BaseModel):
         indexes = [
             models.Index(fields=['student', 'is_completed']),
             models.Index(fields=['exam', 'is_completed']),
+            models.Index(fields=['started_at']),
         ]
 
     def __str__(self):
