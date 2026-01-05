@@ -7,6 +7,7 @@ from rest_framework.authtoken.models import Token
 from .models import Exam, Question, QuestionOption, Submission, StudentAnswer
 from .services import GradingFactory, MockGrader
 
+
 class AuthTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='testpassword')
@@ -36,6 +37,7 @@ class AuthTestCase(TestCase):
         response = client.get('/api/exams/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+
 class GraderTestCase(TestCase):
     def test_mock_grader_exact_match(self):
         grader = MockGrader()
@@ -46,6 +48,7 @@ class GraderTestCase(TestCase):
         grader = MockGrader()
         score = grader.grade("Python is great", "Python is good")
         self.assertTrue(0.0 < score < 1.0)
+
 
 class SubmissionTestCase(TestCase):
     def setUp(self):
@@ -67,7 +70,7 @@ class SubmissionTestCase(TestCase):
             expected_answer="Artificial Intelligence is simulation of human intelligence."
         )
 
-    @override_settings(GRADING_ENGINE='MOCK')
+    @override_settings(GRADING_ENGINE='MOCK', CELERY_TASK_ALWAYS_EAGER=True)
     def test_submission_grading(self):
         data = {
             "exam": self.exam.id,
