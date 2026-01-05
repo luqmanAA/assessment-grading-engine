@@ -20,6 +20,12 @@ class Exam(BaseModel):
                 "Expected Answer: {expected}\nStudent Answer: {actual}\nScore 0.0-1.0:"
     )
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['course']),
+            models.Index(fields=['title']),
+        ]
+
     def __str__(self):
         return self.title
 
@@ -34,6 +40,11 @@ class Question(BaseModel):
     text = models.TextField()
     expected_answer = models.TextField(help_text="Correct answer text or option")
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['question_type']),
+        ]
+
     def __str__(self):
         return f"{self.question_type}: {self.text[:50]}"
 
@@ -42,6 +53,11 @@ class QuestionOption(BaseModel):
     question = models.ForeignKey(Question, related_name='options', on_delete=models.CASCADE)
     text = models.CharField(max_length=255)
     is_correct = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_correct']),
+        ]
 
     def __str__(self):
         return f"{self.text} for Question ID {self.question.id}"
@@ -63,11 +79,8 @@ class Submission(BaseModel):
     class Meta:
         unique_together = ('student', 'exam')
         indexes = [
-            models.Index(fields=[
-                'student',
-                'exam',
-                'grade',
-            ]),
+            models.Index(fields=['student', 'is_completed']),
+            models.Index(fields=['exam', 'is_completed']),
         ]
 
     def __str__(self):
@@ -83,12 +96,7 @@ class StudentAnswer(BaseModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=[
-                'submission',
-                'question',
-                'selected_option',
-                'short_answer_text',
-            ]),
+            models.Index(fields=['submission', 'question']),
         ]
 
     def __str__(self):
