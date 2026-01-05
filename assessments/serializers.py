@@ -36,6 +36,7 @@ class ExamSerializer(serializers.ModelSerializer):
             'duration',
             'course',
             'metadata',
+            'grading_prompt',
             'questions'
         )
 

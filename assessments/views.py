@@ -12,7 +12,7 @@ from helpers.permissions import IsOwnerOnly
 # Create your views here.
 
 class ExamViewSet(ReadOnlyModelViewSet):
-    queryset = Exam.objects.all()
+    queryset = Exam.objects.prefetch_related('questions').all()
     serializer_class = ExamSerializer
     permission_classes = [IsAuthenticated]
 
