@@ -2,6 +2,7 @@ import logging
 import os
 from abc import abstractmethod, ABC
 
+from google import genai
 import openai
 from django.conf import settings
 
@@ -16,20 +17,23 @@ class LLMBackend(ABC):
 
 class GeminiBackend(LLMBackend):
     def __init__(self):
-        api_key = getattr(settings, 'GOOGLE_API_KEY', os.getenv('GOOGLE_API_KEY'))
-        if api_key:
-            genai.configure(api_key=api_key)
-            model_name = getattr(settings, 'GEMINI_MODEL')
-            self.model = genai.GenerativeModel(model_name)
+        self.api_key = getattr(settings, 'GEMINI_API_KEY')
+        if self.api_key:
+            self.client = genai.Client(api_key=self.api_key)
+            self.model_name = getattr(settings, 'GEMINI_MODEL')
         else:
-            self.model = None
-            logger.warning("GOOGLE_API_KEY not found.")
+            self.client = None
+            logger.warning("GEMINI_API_KEY not found.")
 
     def generate_score(self, prompt: str) -> float:
-        if not self.model:
+        if not self.client:
             return 0.0
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
+            print(response.text.strip())
             return float(response.text.strip())
         except Exception as e:
             logger.error(f"Gemini Error: {e}")

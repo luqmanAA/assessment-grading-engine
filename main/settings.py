@@ -159,9 +159,9 @@ GRADING_ENGINE = env('GRADING_ENGINE', default='MOCK')  # Options: 'MOCK', 'LLM'
 
 LLM_PROVIDER = env('LLM_PROVIDER', default='GEMINI')  # Options: 'GEMINI', 'OPENAI'
 
-GOOGLE_API_KEY = env('GOOGLE_API_KEY', default='')
+GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 
-GEMINI_MODEL = env('OPENAI_MODEL', default='gemini-pro')
+GEMINI_MODEL = env('OPENAI_MODEL', default='gemini-3-flash-preview')
 
 OPENAI_MODEL = env('OPENAI_MODEL', default='gpt-3.5-turbo')
 
