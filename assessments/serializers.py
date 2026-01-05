@@ -47,11 +47,16 @@ class StudentAnswerSerializer(serializers.ModelSerializer):
             'does_not_exist': 'The specified question does not exist.'
         }
     )
+    question_text = serializers.ReadOnlyField(source='question.text')
+    selected_option_text = serializers.ReadOnlyField(source='selected_option.text')
+
     class Meta:
         model = StudentAnswer
         fields = (
             'question',
+            'question_text',
             'selected_option',
+            'selected_option_text',
             'short_answer_text'
         )
 
@@ -77,12 +82,16 @@ class StudentAnswerSerializer(serializers.ModelSerializer):
 
 class SubmissionSerializer(serializers.ModelSerializer):
     answers = StudentAnswerSerializer(many=True)
+    exam_title = serializers.ReadOnlyField(source='exam.title')
+    student = serializers.ReadOnlyField(source='student.username')
 
     class Meta:
         model = Submission
         fields = (
             'id',
             'exam',
+            'exam_title',
+            'student',
             'grade',
             'completed_at',
             'answers'

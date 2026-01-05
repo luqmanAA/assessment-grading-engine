@@ -1,5 +1,6 @@
 import logging
 from abc import abstractmethod, ABC
+from typing import Optional
 
 from google import genai
 import openai
@@ -24,9 +25,10 @@ class GeminiBackend(LLMBackend):
             self.client = None
             logger.warning("GEMINI_API_KEY not found.")
 
-    def generate_score(self, prompt: str) -> float:
+    def generate_score(self, prompt: str) -> Optional[float]:
         if not self.client:
-            return 0.0
+            return None
+
         try:
             response = self.client.models.generate_content(
                 model=self.model_name,
@@ -35,10 +37,11 @@ class GeminiBackend(LLMBackend):
             return float(response.text.strip())
         except Exception as e:
             logger.error(f"Gemini Error: {e}")
-            return 0.0
+            return None
 
 
 class OpenAIBackend(LLMBackend):
+
     def __init__(self):
         api_key = getattr(settings, 'OPENAI_API_KEY')
         if api_key:
@@ -48,9 +51,10 @@ class OpenAIBackend(LLMBackend):
             self.client = None
             logger.warning("OPENAI_API_KEY not found.")
 
-    def generate_score(self, prompt: str) -> float:
+    def generate_score(self, prompt: str) -> Optional[float]:
         if not self.client:
-            return 0.0
+            return None
+
         try:
             response = self.client.chat.completions.create(
                 model=self.model_name,
@@ -61,4 +65,4 @@ class OpenAIBackend(LLMBackend):
             return float(content)
         except Exception as e:
             logger.error(f"OpenAI Error: {e}")
-            return 0.0
+            return None
