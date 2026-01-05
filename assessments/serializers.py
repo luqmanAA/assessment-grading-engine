@@ -114,10 +114,10 @@ class SubmissionSerializer(serializers.ModelSerializer):
         exam = attrs.get('exam')
         user_submission = Submission.objects.filter(student=user, exam=exam).first()
         
-        # if user_submission and (user_submission.is_completed or user_submission.answers.count() == exam.questions.count()):
-        #     raise serializers.ValidationError({
-        #         "non_field_errors": "You have already completed this exam and cannot submit again."
-        #     })
+        if user_submission and (user_submission.is_completed or user_submission.answers.count() == exam.questions.count()):
+            raise serializers.ValidationError({
+                "non_field_errors": "You have already completed this exam and cannot submit again."
+            })
 
         # Strict Validation: Ensure all questions belong to the submitted exam
         answers_data = attrs.get('answers', [])

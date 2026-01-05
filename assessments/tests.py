@@ -3,9 +3,8 @@ from django.test import TestCase, override_settings
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from rest_framework import status
-from rest_framework.authtoken.models import Token
-from .models import Exam, Question, QuestionOption, Submission, StudentAnswer
-from .services import GradingFactory, MockGrader
+from .models import Exam, Question, QuestionOption, Submission
+from .services import MockGrader
 
 
 class AuthTestCase(TestCase):
