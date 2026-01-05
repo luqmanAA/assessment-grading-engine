@@ -1,5 +1,4 @@
 import logging
-import os
 from abc import abstractmethod, ABC
 
 from google import genai
@@ -33,7 +32,6 @@ class GeminiBackend(LLMBackend):
                 model=self.model_name,
                 contents=prompt
             )
-            print(response.text.strip())
             return float(response.text.strip())
         except Exception as e:
             logger.error(f"Gemini Error: {e}")

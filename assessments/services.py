@@ -13,26 +13,32 @@ logger = logging.getLogger(__name__)
 
 
 class BaseGrader(ABC):
-    @abstractmethod
     def grade(self, expected: str, actual: str, template: str = None) -> float:
         """
         Compare expected answer and actual answer.
         Returns a score between 0.0 and 1.0.
+        Commonly handles empty inputs and exact matches to save resources.
         """
+        if not expected or not actual:
+            return 0.0
+
+        # Exact match check (case-insensitive and stripped)
+        if expected.strip().lower() == actual.strip().lower():
+            return 1.0
+
+        return self.evaluate_result(expected, actual, template)
+
+    @abstractmethod
+    def evaluate_result(self, expected: str, actual: str, template: str = None) -> float:
         pass
 
 
 class MockGrader(BaseGrader):
-    def grade(self, expected: str, actual: str, template: str = None) -> float:
-        if not expected or not actual:
-            return 0.0
 
-        expected = expected.strip().lower()
-        actual = actual.strip().lower()
-        if expected == actual:
-            return 1.0
-
+    def evaluate_result(self, expected: str, actual: str, template: str = None) -> float:
         try:
+            expected = expected.strip().lower()
+            actual = actual.strip().lower()
             vectorizer = TfidfVectorizer()
             tfidf_matrix = vectorizer.fit_transform([expected, actual])
             similarity = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
@@ -43,6 +49,7 @@ class MockGrader(BaseGrader):
 
 
 class LLMGrader(BaseGrader):
+
     def __init__(self):
         self.backend = self._get_backend()
 
@@ -70,7 +77,7 @@ class LLMGrader(BaseGrader):
 
         return active_template.format(expected=expected, actual=actual)
 
-    def grade(self, expected: str, actual: str, template: str = None) -> float:
+    def evaluate_result(self, expected: str, actual: str, template: str = None) -> float:
         prompt = self.prepare_prompt(expected, actual, template)
         score = self.backend.generate_score(prompt)
         return score if score is not None else 0.0
